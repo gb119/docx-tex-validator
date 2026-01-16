@@ -41,7 +41,10 @@ jobs:
         shell: bash -l {0}
         run: |
           # Extract version from __init__.py
-          VERSION=$(python -c "import sys; sys.path.insert(0, '.'); from docx_validator import __version__; print(__version__)")
+          VERSION=$(python -c "import sys; \
+            sys.path.insert(0, '.'); \
+            from docx_validator import __version__; \
+            print(__version__)")
           
           cat > conda-recipe/meta.yaml << EOF
           {% set name = "docx-validator" %}

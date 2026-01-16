@@ -7,32 +7,30 @@ import sys
 from pathlib import Path
 
 
-def test_version_defined():
-    """Test that __version__ is defined in the package."""
-    # Read __version__ directly from __init__.py to avoid import issues
+def _get_version_from_init():
+    """Helper function to extract version from __init__.py."""
     init_path = Path(__file__).parent.parent / "docx_validator" / "__init__.py"
     init_content = init_path.read_text()
     
     # Extract __version__ value
     version_match = re.search(r'__version__\s*=\s*["\']([^"\']+)["\']', init_content)
-    assert version_match is not None, "__version__ not found in __init__.py"
+    if version_match is None:
+        raise ValueError("__version__ not found in __init__.py")
     
-    version = version_match.group(1)
+    return version_match.group(1)
+
+
+def test_version_defined():
+    """Test that __version__ is defined in the package."""
+    version = _get_version_from_init()
+    
     assert version is not None
     assert len(version) > 0
 
 
 def test_version_format():
     """Test that version follows semantic versioning format."""
-    # Read __version__ directly from __init__.py to avoid import issues
-    init_path = Path(__file__).parent.parent / "docx_validator" / "__init__.py"
-    init_content = init_path.read_text()
-    
-    # Extract __version__ value
-    version_match = re.search(r'__version__\s*=\s*["\']([^"\']+)["\']', init_content)
-    assert version_match is not None, "__version__ not found in __init__.py"
-    
-    version = version_match.group(1)
+    version = _get_version_from_init()
     
     # Simple semantic versioning pattern
     pattern = r'^\d+\.\d+\.\d+(?:-[a-zA-Z0-9.]+)?(?:\+[a-zA-Z0-9.]+)?$'
@@ -68,10 +66,12 @@ def test_pyproject_uses_dynamic_version():
     pyproject_path = Path(__file__).parent.parent / "pyproject.toml"
     pyproject_content = pyproject_path.read_text()
     
-    # Check that version is in the dynamic list
-    assert 'dynamic = ["version"]' in pyproject_content or "dynamic = ['version']" in pyproject_content
-    # Check that version is NOT hardcoded in [project]
-    # We'll check there's no line like: version = "0.1.0" in [project] section
+    # Check that version is in the dynamic list using regex
+    dynamic_version_pattern = r'dynamic\s*=\s*\[.*["\']version["\'].*\]'
+    assert re.search(dynamic_version_pattern, pyproject_content), \
+        "Version should be in the dynamic list in [project] section"
+    
+    # Check that version is NOT hardcoded in [project] section
     lines = pyproject_content.split('\n')
     in_project_section = False
     for line in lines:
@@ -79,12 +79,14 @@ def test_pyproject_uses_dynamic_version():
             in_project_section = True
         elif line.strip().startswith('[') and line.strip() != '[project]':
             in_project_section = False
-        elif in_project_section and line.strip().startswith('version = '):
+        elif in_project_section and re.match(r'^\s*version\s*=\s*["\']', line):
             assert False, "Version should not be hardcoded in [project] section"
     
     # Check that setuptools.dynamic configuration exists
     assert '[tool.setuptools.dynamic]' in pyproject_content
-    assert 'version = {attr = "docx_validator.__version__"}' in pyproject_content
+    setuptools_dynamic_pattern = r'version\s*=\s*\{.*attr.*docx_validator\.__version__.*\}'
+    assert re.search(setuptools_dynamic_pattern, pyproject_content), \
+        "setuptools.dynamic should configure version from docx_validator.__version__"
 
 
 if __name__ == "__main__":
