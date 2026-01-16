@@ -52,7 +52,7 @@ def test_docx_parser_invalid_extension():
         temp_path = f.name
 
     try:
-        with pytest.raises(ValueError, match="must be a .docx file"):
+        with pytest.raises(ValueError, match="is not supported by DocxParser"):
             parser.parse_docx(temp_path)
     finally:
         os.unlink(temp_path)
@@ -431,34 +431,41 @@ def test_context_based_validation_efficiency():
         
         # Create a simple mock document
         doc_structure = {"metadata": {"title": "Test"}, "paragraphs": ["Content"]}
-        validator.parser.parse_docx = Mock(return_value=doc_structure)
         
-        # Run validation (this should use the new context-based approach)
-        report = validator.validate("test.docx", specs)
+        # Mock the detect_parser to avoid file validation
+        from docx_validator.parsers import detect_parser
+        from unittest.mock import patch
         
-        # Verify the results
-        assert report.total_specs == 3
+        mock_parser = Mock()
+        mock_parser.parse = Mock(return_value=doc_structure)
         
-        # Verify efficiency: should have 4 calls total
-        # 1 for context setup + 3 for individual validations
-        assert len(prompts_sent) == 4
+        with patch('docx_validator.validator.detect_parser', return_value=mock_parser):
+            # Run validation (this should use the new context-based approach)
+            report = validator.validate("test.docx", specs)
         
-        # First call should be context setup (no message history)
-        assert not prompts_sent[0]['has_history']
-        assert "Document Structure:" in prompts_sent[0]['prompt']
-        
-        # Count how many times the full document structure appears in prompts
-        doc_json = json.dumps(doc_structure, indent=2, default=str)
-        full_doc_appearances = sum(1 for p in prompts_sent if doc_json in p['prompt'])
-        
-        # Document should only appear once (in context setup), not in validation prompts
-        assert full_doc_appearances == 1, "Document structure should only be sent once in context setup"
-        
-        # Subsequent calls should have message history
-        for i in range(1, 4):
-            assert prompts_sent[i]['has_history'], f"Validation call {i} should have message history"
-            assert "Document Structure:" not in prompts_sent[i]['prompt'], \
-                f"Validation call {i} should not repeat the document structure"
+            # Verify the results
+            assert report.total_specs == 3
+            
+            # Verify efficiency: should have 4 calls total
+            # 1 for context setup + 3 for individual validations
+            assert len(prompts_sent) == 4
+            
+            # First call should be context setup (no message history)
+            assert not prompts_sent[0]['has_history']
+            assert "Document Structure:" in prompts_sent[0]['prompt']
+            
+            # Count how many times the full document structure appears in prompts
+            doc_json = json.dumps(doc_structure, indent=2, default=str)
+            full_doc_appearances = sum(1 for p in prompts_sent if doc_json in p['prompt'])
+            
+            # Document should only appear once (in context setup), not in validation prompts
+            assert full_doc_appearances == 1, "Document structure should only be sent once in context setup"
+            
+            # Subsequent calls should have message history
+            for i in range(1, 4):
+                assert prompts_sent[i]['has_history'], f"Validation call {i} should have message history"
+                assert "Document Structure:" not in prompts_sent[i]['prompt'], \
+                    f"Validation call {i} should not repeat the document structure"
         
     finally:
         if "OPENAI_API_KEY" in os.environ:
