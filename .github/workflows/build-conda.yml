@@ -151,4 +151,5 @@ jobs:
         shell: bash -l {0}
         run: |
           # Upload to the phygbu channel
-          anaconda -t ${{ secrets.ANACONDA_TOKEN }} upload --user phygbu conda-packages/**/*.tar.bz2
+          # Use --force to overwrite existing packages with same version
+          anaconda -t ${{ secrets.ANACONDA_TOKEN }} upload --user phygbu --force conda-packages/**/*.tar.bz2
