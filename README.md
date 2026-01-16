@@ -1,16 +1,17 @@
 # docx-validator
 
-A Python library and command-line tool that uses LLMs (via GitHub Models and pydantic-ai) to validate Microsoft Word .docx files against specification requirements.
+A Python library and command-line tool that uses LLMs to validate Microsoft Word .docx files against specification requirements. Supports multiple AI backends including OpenAI, GitHub Models, and NebulaOne.
 
 📚 **[Read the Documentation](https://gb119.github.io/docx-validator/)**
 
 ## Features
 
-- 🤖 **LLM-Powered Validation**: Uses GitHub Models through pydantic-ai for intelligent document analysis
+- 🤖 **Multiple AI Backends**: Supports OpenAI, GitHub Models, and NebulaOne for flexible deployment
 - 📄 **Document Structure Analysis**: Extracts and analyzes document structure, styles, tables, metadata, and more
 - ✅ **Specification-Based Validation**: Define custom validation requirements for your documents
 - 📊 **Normalized Results**: Returns True/False validation results with numerical scoring
 - 🖥️ **CLI and Library**: Use as a command-line tool or integrate into your Python projects
+- 🔌 **Pluggable Architecture**: Easy to extend with custom AI backends
 - 📦 **Easy Distribution**: GitHub Actions workflows for building wheel and conda packages
 
 ## Installation
@@ -45,14 +46,29 @@ conda install -c conda-forge docx-validator
 docx-validator init-spec specifications.json
 ```
 
-2. **Validate a document:**
+2. **Validate a document (using default OpenAI backend):**
 
 ```bash
-export GITHUB_TOKEN="your_github_token"
+export OPENAI_API_KEY="your_openai_api_key"
 docx-validator validate document.docx --spec-file specifications.json
 ```
 
-3. **Use inline specifications:**
+3. **Use GitHub Models:**
+
+```bash
+export GITHUB_TOKEN="your_github_token"
+docx-validator validate document.docx -b github -s specifications.json
+```
+
+4. **Use NebulaOne:**
+
+```bash
+export NEBULAONE_API_KEY="your_nebulaone_api_key"
+export NEBULAONE_BASE_URL="https://api.nebulaone.example"
+docx-validator validate document.docx -b nebulaone -m nebula-1 -s specifications.json
+```
+
+5. **Use inline specifications:**
 
 ```bash
 docx-validator validate document.docx \
@@ -60,7 +76,7 @@ docx-validator validate document.docx \
   -r "Has Author:Document must have an author"
 ```
 
-4. **Save results to a file:**
+6. **Save results to a file:**
 
 ```bash
 docx-validator validate document.docx -s specs.json -o results.json -v
@@ -68,11 +84,17 @@ docx-validator validate document.docx -s specs.json -o results.json -v
 
 ### Python Library Usage
 
+#### Using OpenAI (default)
+
 ```python
 from docx_validator import DocxValidator, ValidationSpec
 
-# Create validator (uses GITHUB_TOKEN environment variable)
-validator = DocxValidator(model_name="gpt-4o-mini")
+# Create validator with OpenAI backend (default)
+validator = DocxValidator(
+    backend="openai",
+    model_name="gpt-4o-mini",
+    api_key="your_openai_api_key"
+)
 
 # Define specifications
 specs = [
@@ -99,28 +121,87 @@ for result in report.results:
         print(f"  Reasoning: {result.reasoning}")
 ```
 
+#### Using GitHub Models
+
+```python
+from docx_validator import DocxValidator, ValidationSpec
+
+# Create validator with GitHub Models backend
+validator = DocxValidator(
+    backend="github",
+    model_name="gpt-4o-mini",
+    api_key="your_github_token"
+)
+
+# Use as shown above
+```
+
+#### Using NebulaOne
+
+```python
+from docx_validator import DocxValidator, ValidationSpec
+
+# Create validator with NebulaOne backend
+validator = DocxValidator(
+    backend="nebulaone",
+    model_name="nebula-1",
+    api_key="your_nebulaone_api_key",
+    base_url="https://api.nebulaone.example"
+)
+
+# Use as shown above
+```
+
 ## Configuration
 
-### GitHub Models API
+### Supported Backends
 
-By default, `docx-validator` uses GitHub Models for LLM inference. You need to:
+docx-validator supports multiple AI backends:
 
-1. Get a GitHub token with access to GitHub Models
-2. Set it as an environment variable:
+1. **OpenAI** (`backend="openai"`): Direct OpenAI API access
+2. **GitHub Models** (`backend="github"`): GitHub's AI model service
+3. **NebulaOne** (`backend="nebulaone"`): NebulaOne AI service
+
+### Environment Variables
+
+Different backends use different environment variables for configuration:
+
+#### OpenAI Backend
+
+```bash
+export OPENAI_API_KEY="your_openai_api_key"
+# Optional: Custom endpoint
+export OPENAI_BASE_URL="https://api.openai.com/v1"
+```
+
+#### GitHub Models Backend
 
 ```bash
 export GITHUB_TOKEN="your_github_token"
+# Optional: Custom endpoint (defaults to GitHub Models)
+export OPENAI_BASE_URL="https://models.inference.ai.azure.com"
 ```
 
-### Custom OpenAI-Compatible Endpoints
+#### NebulaOne Backend
 
-You can use any OpenAI-compatible API:
+```bash
+export NEBULAONE_API_KEY="your_nebulaone_api_key"
+export NEBULAONE_BASE_URL="https://api.nebulaone.example"
+```
+
+### Custom Backend Configuration
+
+You can pass any custom configuration to a backend:
 
 ```python
 validator = DocxValidator(
+    backend="openai",
     model_name="gpt-4",
     api_key="your_api_key",
-    base_url="https://api.openai.com/v1"
+    base_url="https://api.openai.com/v1",
+    # Additional backend-specific options
+    temperature=0.7,
+    max_tokens=2000
 )
 ```
 
