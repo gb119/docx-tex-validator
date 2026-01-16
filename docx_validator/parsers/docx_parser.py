@@ -3,7 +3,6 @@ Parser for .docx files (Microsoft Word documents).
 """
 
 import zipfile
-from pathlib import Path
 from typing import Any, Dict
 
 from docx import Document

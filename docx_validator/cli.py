@@ -20,7 +20,7 @@ def cli():
 
     This tool uses AI models and pydantic-ai to check if documents
     conform to specification requirements.
-    
+
     Supports multiple document formats: DOCX, HTML, LaTeX.
     """
     pass

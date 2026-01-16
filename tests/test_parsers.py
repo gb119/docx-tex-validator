@@ -8,7 +8,6 @@ import tempfile
 import pytest
 
 from docx_validator.parsers import (
-    BaseParser,
     DocxParser,
     HTMLParser,
     LaTeXParser,
@@ -51,7 +50,7 @@ def test_detect_parser_html():
     """Test auto-detecting HTML parser from file extension."""
     parser = detect_parser("test.html")
     assert isinstance(parser, HTMLParser)
-    
+
     parser = detect_parser("test.htm")
     assert isinstance(parser, HTMLParser)
 
@@ -60,7 +59,7 @@ def test_detect_parser_latex():
     """Test auto-detecting LaTeX parser from file extension."""
     parser = detect_parser("test.tex")
     assert isinstance(parser, LaTeXParser)
-    
+
     parser = detect_parser("test.latex")
     assert isinstance(parser, LaTeXParser)
 
@@ -88,15 +87,15 @@ def test_html_parser_basic():
     </body>
     </html>
     """
-    
+
     with tempfile.NamedTemporaryFile(mode="w", suffix=".html", delete=False) as f:
         f.write(html_content)
         temp_path = f.name
-    
+
     try:
         parser = HTMLParser()
         result = parser.parse(temp_path)
-        
+
         assert result["document_type"] == "html"
         assert result["metadata"]["title"] == "Test Document"
         # Author is only extracted if BeautifulSoup is available
@@ -114,7 +113,7 @@ def test_html_parser_invalid_extension():
     with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False) as f:
         f.write("test")
         temp_path = f.name
-    
+
     try:
         parser = HTMLParser()
         with pytest.raises(ValueError, match="is not supported by HTMLParser"):
@@ -131,41 +130,41 @@ def test_latex_parser_basic():
     \title{Test Document}
     \author{Test Author}
     \date{\today}
-    
+
     \begin{document}
     \maketitle
-    
+
     \section{Introduction}
     This is the introduction.
-    
+
     \subsection{Background}
     Some background information.
-    
+
     \begin{figure}
         \caption{A test figure}
         \label{fig:test}
     \end{figure}
-    
+
     \begin{equation}
         E = mc^2
         \label{eq:einstein}
     \end{equation}
-    
+
     See Figure \ref{fig:test} and Equation \ref{eq:einstein}.
-    
+
     \cite{test2023}
-    
+
     \end{document}
     """
-    
+
     with tempfile.NamedTemporaryFile(mode="w", suffix=".tex", delete=False) as f:
         f.write(latex_content)
         temp_path = f.name
-    
+
     try:
         parser = LaTeXParser()
         result = parser.parse(temp_path)
-        
+
         assert result["document_type"] == "latex"
         assert result["document_class"] == "article"
         assert result["metadata"]["title"] == "Test Document"
@@ -186,7 +185,7 @@ def test_latex_parser_invalid_extension():
     with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False) as f:
         f.write("test")
         temp_path = f.name
-    
+
     try:
         parser = LaTeXParser()
         with pytest.raises(ValueError, match="is not supported by LaTeXParser"):
@@ -235,10 +234,11 @@ def test_parser_file_not_found():
 def test_validator_with_html_parser():
     """Test that validator can be initialized with HTML parser."""
     import os
+
     from docx_validator import DocxValidator
-    
+
     os.environ["OPENAI_API_KEY"] = "test_key"
-    
+
     try:
         validator = DocxValidator(parser="html", api_key="test_key")
         assert isinstance(validator.parser, HTMLParser)
@@ -250,10 +250,11 @@ def test_validator_with_html_parser():
 def test_validator_with_latex_parser():
     """Test that validator can be initialized with LaTeX parser."""
     import os
+
     from docx_validator import DocxValidator
-    
+
     os.environ["OPENAI_API_KEY"] = "test_key"
-    
+
     try:
         validator = DocxValidator(parser="latex", api_key="test_key")
         assert isinstance(validator.parser, LaTeXParser)
@@ -266,48 +267,51 @@ def test_validator_auto_detect_parser():
     """Test that validator can auto-detect parser from file extension."""
     import os
     from unittest.mock import Mock, patch
+
     from docx_validator import DocxValidator, ValidationSpec
-    
+
     os.environ["OPENAI_API_KEY"] = "test_key"
-    
+
     try:
         # Create validator without specifying parser
         validator = DocxValidator(api_key="test_key")
-        
+
         # Mock the parser to avoid file operations
         mock_html_parser = Mock()
-        mock_html_parser.parse = Mock(return_value={
-            "document_type": "html",
-            "metadata": {"title": "Test"},
-            "headings": [],
-            "paragraphs": []
-        })
-        
+        mock_html_parser.parse = Mock(
+            return_value={
+                "document_type": "html",
+                "metadata": {"title": "Test"},
+                "headings": [],
+                "paragraphs": [],
+            }
+        )
+
         mock_latex_parser = Mock()
-        mock_latex_parser.parse = Mock(return_value={
-            "document_type": "latex",
-            "metadata": {"title": "Test"},
-            "sections": []
-        })
-        
+        mock_latex_parser.parse = Mock(
+            return_value={"document_type": "latex", "metadata": {"title": "Test"}, "sections": []}
+        )
+
         specs = [ValidationSpec(name="Test", description="Test spec")]
-        
+
         # Mock backend to avoid API calls
-        validator.backend.run_sync = Mock(return_value=Mock(
-            data="Result: PASS\nConfidence: 1.0\nReasoning: Test",
-            all_messages=Mock(return_value=[])
-        ))
-        
+        validator.backend.run_sync = Mock(
+            return_value=Mock(
+                data="Result: PASS\nConfidence: 1.0\nReasoning: Test",
+                all_messages=Mock(return_value=[]),
+            )
+        )
+
         # Test HTML file detection
-        with patch('docx_validator.validator.detect_parser', return_value=mock_html_parser):
+        with patch("docx_validator.validator.detect_parser", return_value=mock_html_parser):
             report = validator.validate("test.html", specs)
             assert report.file_path == "test.html"
-        
+
         # Test LaTeX file detection
-        with patch('docx_validator.validator.detect_parser', return_value=mock_latex_parser):
+        with patch("docx_validator.validator.detect_parser", return_value=mock_latex_parser):
             report = validator.validate("test.tex", specs)
             assert report.file_path == "test.tex"
-            
+
     finally:
         if "OPENAI_API_KEY" in os.environ:
             del os.environ["OPENAI_API_KEY"]

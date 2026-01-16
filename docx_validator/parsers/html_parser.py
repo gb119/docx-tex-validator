@@ -2,7 +2,6 @@
 Parser for HTML files.
 """
 
-from pathlib import Path
 from typing import Any, Dict
 
 from .base import BaseParser
@@ -35,6 +34,7 @@ class HTMLParser(BaseParser):
             # Use BeautifulSoup for HTML parsing if available, otherwise basic parsing
             try:
                 from bs4 import BeautifulSoup
+
                 has_bs4 = True
             except ImportError:
                 has_bs4 = False
@@ -93,7 +93,9 @@ class HTMLParser(BaseParser):
                 cells = row.find_all(["td", "th"])
                 row_data = [cell.get_text(strip=True) for cell in cells]
                 table_data.append(row_data)
-            tables.append({"rows": len(rows), "columns": len(cells) if rows else 0, "cells": table_data})
+            tables.append(
+                {"rows": len(rows), "columns": len(cells) if rows else 0, "cells": table_data}
+            )
 
         # Extract lists
         lists = []

@@ -9,7 +9,7 @@ from pydantic import BaseModel, Field
 
 from .backends import get_backend
 from .parser import DocxParser
-from .parsers import BaseParser, detect_parser, get_parser
+from .parsers import detect_parser, get_parser
 
 
 class ValidationSpec(BaseModel):
@@ -242,9 +242,7 @@ Reasoning: Your explanation here
 
         try:
             # Run the agent with message history for context
-            response = self.backend.run_sync(
-                self.agent, prompt, message_history=message_history
-            )
+            response = self.backend.run_sync(self.agent, prompt, message_history=message_history)
             response_text = str(response.data)
 
             # Parse the response

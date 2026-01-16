@@ -2,7 +2,6 @@
 Parser for LaTeX files.
 """
 
-from pathlib import Path
 from typing import Any, Dict
 
 from .base import BaseParser
