@@ -79,19 +79,23 @@ class OpenAIBackend(BaseBackend):
             system_prompt=system_prompt,
         )
 
-    def run_sync(self, agent: Agent, prompt: str) -> str:
+    def run_sync(self, agent: Agent, prompt: str, message_history=None):
         """
         Run a synchronous inference request.
 
         Args:
             agent: The agent to use for inference
             prompt: The user prompt
+            message_history: Optional message history for context continuity
 
         Returns:
-            The model's response as a string
+            AgentRunResult containing the response and message history
         """
-        response = agent.run_sync(prompt)
-        return str(response.data)
+        if message_history:
+            response = agent.run_sync(prompt, message_history=message_history)
+        else:
+            response = agent.run_sync(prompt)
+        return response
 
     @property
     def name(self) -> str:
