@@ -127,10 +127,10 @@ class DocxValidator:
         total_specs = len(specifications)
 
         # Calculate weighted scores
+        # Create a mapping of spec_name to result for robust matching
+        result_map = {result.spec_name: result for result in results}
         total_score_available = sum(spec.score for spec in specifications)
-        achieved_score = sum(
-            spec.score for spec, result in zip(specifications, results) if result.passed
-        )
+        achieved_score = sum(spec.score for spec in specifications if result_map[spec.name].passed)
         # Handle edge cases with zero or negative total scores
         # When total is <= 0, score calculation is undefined, so default to 0.0
         if total_score_available > 0:
