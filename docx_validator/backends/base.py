@@ -40,16 +40,17 @@ class BaseBackend(ABC):
         pass
 
     @abstractmethod
-    def run_sync(self, agent: Any, prompt: str) -> str:
+    def run_sync(self, agent: Any, prompt: str, message_history=None) -> Any:
         """
         Run a synchronous inference request.
 
         Args:
             agent: The agent to use for inference
             prompt: The user prompt
+            message_history: Optional message history for context continuity
 
         Returns:
-            The model's response as a string
+            The model's response (typically AgentRunResult or similar)
         """
         pass
 
