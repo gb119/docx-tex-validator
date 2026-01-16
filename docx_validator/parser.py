@@ -2,6 +2,7 @@
 Module for parsing .docx files and extracting document structure information.
 """
 
+import zipfile
 from pathlib import Path
 from typing import Any, Dict
 
@@ -48,6 +49,7 @@ class DocxParser:
             "has_header": False,
             "has_footer": False,
             "metadata": {},
+            "xml_content": None,
         }
 
         # Extract paragraph information
@@ -103,5 +105,17 @@ class DocxParser:
 
         # Convert styles set to list for JSON serialization
         structure["styles"] = list(structure["styles"])
+
+        # Extract raw XML content from the DOCX file for advanced validation
+        # This allows the LLM to inspect cross-references, field codes, captions, etc.
+        try:
+            with zipfile.ZipFile(file_path, "r") as docx_zip:
+                if "word/document.xml" in docx_zip.namelist():
+                    xml_bytes = docx_zip.read("word/document.xml")
+                    structure["xml_content"] = xml_bytes.decode("utf-8")
+        except Exception:
+            # If XML extraction fails, continue without it
+            # The basic structure information is still available
+            pass
 
         return structure
