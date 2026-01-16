@@ -1,15 +1,13 @@
 """
-Core validation module using pydantic-ai and GitHub models.
+Core validation module using pydantic-ai with pluggable AI backends.
 """
 
 import json
-import os
 from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field
-from pydantic_ai import Agent
-from pydantic_ai.models.openai import OpenAIChatModel
 
+from .backends import get_backend
 from .parser import DocxParser
 
 
@@ -45,45 +43,64 @@ class DocxValidator:
     """
     Validator for .docx files using LLM-based analysis.
 
-    Uses GitHub models through pydantic-ai to validate document structure
-    against specification requirements.
+    Supports multiple AI backends including OpenAI, GitHub Models, and NebulaOne.
     """
 
     def __init__(
         self,
+        backend: str = "openai",
         model_name: str = "gpt-4o-mini",
         api_key: Optional[str] = None,
+        base_url: Optional[str] = None,
+        **backend_kwargs
     ):
         """
         Initialize the DocxValidator.
 
         Args:
-            model_name: Name of the OpenAI-compatible model to use
-            api_key: API key for the model (uses GITHUB_TOKEN or OPENAI_API_KEY env var if not provided)
-            
-        Note:
-            To use a custom endpoint (like GitHub Models), set the OPENAI_BASE_URL environment variable.
-            For GitHub Models, use: OPENAI_BASE_URL="https://models.inference.ai.azure.com"
+            backend: Name of the backend to use ('openai', 'github', 'nebulaone').
+                    Default is 'openai'.
+            model_name: Name of the model to use. Default is 'gpt-4o-mini'.
+            api_key: API key for authentication. If not provided, will try environment variables:
+                    - For OpenAI/GitHub: GITHUB_TOKEN or OPENAI_API_KEY
+                    - For NebulaOne: NEBULAONE_API_KEY or OPENAI_API_KEY
+            base_url: Base URL for the API endpoint. If not provided,
+                     will try environment variables:
+                     - For OpenAI/GitHub: OPENAI_BASE_URL
+                     - For NebulaOne: NEBULAONE_BASE_URL
+            **backend_kwargs: Additional backend-specific configuration options
+
+        Examples:
+            # Use OpenAI (default)
+            validator = DocxValidator()
+
+            # Use GitHub Models
+            validator = DocxValidator(backend='github', api_key='ghp_xxx')
+
+            # Use NebulaOne
+            validator = DocxValidator(
+                backend='nebulaone', model_name='nebula-1',
+                api_key='your-key', base_url='https://api.nebulaone.example'
+            )
         """
-        self.model_name = model_name
         self.parser = DocxParser()
 
-        # Set default API key from environment if not provided
-        if api_key is None:
-            api_key = os.getenv("GITHUB_TOKEN") or os.getenv("OPENAI_API_KEY")
-
-        # Create the OpenAI-compatible model
-        # pydantic-ai will automatically use OPENAI_API_KEY and OPENAI_BASE_URL environment variables
-        self.model = OpenAIChatModel(model_name)
+        # Create the backend
+        self.backend = get_backend(
+            backend,
+            model_name=model_name,
+            api_key=api_key,
+            base_url=base_url,
+            **backend_kwargs
+        )
 
         # Create the validation agent
-        self.agent = Agent(
-            model=self.model,
+        self.agent = self.backend.get_agent(
             system_prompt=(
                 "You are a document validation expert. Analyze document structures "
                 "and determine if they meet specific requirements. Provide clear, "
                 "factual assessments based on the document structure data provided."
-            ),
+            )
         )
 
     def validate(
@@ -157,13 +174,15 @@ Reasoning: Your explanation here
 """
 
         try:
-            # Run the agent synchronously
-            response = self.agent.run_sync(prompt)
-            response_text = str(response.data)
+            # Run the agent synchronously using the backend
+            response_text = self.backend.run_sync(self.agent, prompt)
 
             # Parse the response
-            passed = "PASS" in response_text.upper() and "FAIL" not in response_text.split("Result:")[1].split("\n")[0].upper()
-            
+            passed = (
+                "PASS" in response_text.upper()
+                and "FAIL" not in response_text.split("Result:")[1].split("\n")[0].upper()
+            )
+
             # Extract confidence
             confidence = 0.8  # Default confidence
             if "Confidence:" in response_text:

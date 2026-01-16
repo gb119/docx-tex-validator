@@ -79,7 +79,9 @@ class DocxParser:
             section_info = {
                 "page_width": section.page_width.inches if section.page_width else None,
                 "page_height": section.page_height.inches if section.page_height else None,
-                "orientation": str(section.orientation) if hasattr(section, "orientation") else None,
+                "orientation": str(section.orientation)
+                if hasattr(section, "orientation")
+                else None,
             }
             structure["sections"].append(section_info)
 

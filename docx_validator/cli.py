@@ -4,7 +4,6 @@ Command-line interface for docx-validator.
 
 import json
 import sys
-from pathlib import Path
 from typing import List, Optional
 
 import click
@@ -39,6 +38,12 @@ def cli():
     help="Inline specification in format 'name:description'",
 )
 @click.option(
+    "--backend",
+    "-b",
+    default="openai",
+    help="AI backend to use: 'openai', 'github', or 'nebulaone' (default: openai)",
+)
+@click.option(
     "--model",
     "-m",
     default="gpt-4o-mini",
@@ -47,14 +52,16 @@ def cli():
 @click.option(
     "--api-key",
     "-k",
-    envvar="GITHUB_TOKEN",
-    help="API key for the model (uses GITHUB_TOKEN env var by default)",
+    help="API key for authentication. Uses environment variables if not provided:\n"
+         "OpenAI/GitHub: GITHUB_TOKEN or OPENAI_API_KEY\n"
+         "NebulaOne: NEBULAONE_API_KEY",
 )
 @click.option(
     "--base-url",
     "-u",
-    default="https://models.inference.ai.azure.com",
-    help="Base URL for the API endpoint",
+    help="Base URL for the API endpoint. Uses environment variables if not provided:\n"
+         "OpenAI/GitHub: OPENAI_BASE_URL\n"
+         "NebulaOne: NEBULAONE_BASE_URL",
 )
 @click.option(
     "--output",
@@ -72,9 +79,10 @@ def validate(
     file_path: str,
     spec_file: Optional[str],
     spec: tuple,
+    backend: str,
     model: str,
     api_key: Optional[str],
-    base_url: str,
+    base_url: Optional[str],
     output: Optional[str],
     verbose: bool,
 ):
@@ -84,7 +92,16 @@ def validate(
     FILE_PATH: Path to the .docx file to validate
 
     Example:
+        # Use default OpenAI backend
         docx-validator validate document.docx -s specs.json
+
+        # Use GitHub Models
+        docx-validator validate document.docx -b github -s specs.json
+
+        # Use NebulaOne
+        docx-validator validate document.docx -b nebulaone -m nebula-1 -s specs.json
+
+        # With inline specifications
         docx-validator validate document.docx -r "Has Title:Document must have a title"
     """
     # Load specifications
@@ -98,6 +115,7 @@ def validate(
         sys.exit(1)
 
     click.echo(f"Validating: {file_path}")
+    click.echo(f"Using backend: {backend}")
     click.echo(f"Using model: {model}")
     click.echo(f"Specifications: {len(specifications)}")
     click.echo()
@@ -105,6 +123,7 @@ def validate(
     # Initialize validator
     try:
         validator = DocxValidator(
+            backend=backend,
             model_name=model,
             api_key=api_key,
             base_url=base_url,
