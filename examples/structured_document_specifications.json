@@ -55,7 +55,7 @@
   },
   {
     "name": "Has At Least 5 References",
-    "description": "Document must contain at least 5 references listed under a heading titled 'References'. The references should be formatted in either Harvard style (author-date format) or Numeric style (numbered format). Look for a section with 'References' or 'Bibliography' heading containing at least 5 distinct reference entries.",
+    "description": "Document must contain at least 5 references listed under a heading titled 'References' or 'Bibliography'. The references should be formatted in either Harvard style (author-date format) or Numeric style (numbered format). Look for a section with this heading containing at least 5 distinct reference entries.",
     "category": "references",
     "score": 2.0
   },
