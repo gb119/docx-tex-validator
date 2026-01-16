@@ -3,7 +3,7 @@ Core validation module using pydantic-ai with pluggable AI backends.
 """
 
 import json
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 from pydantic import BaseModel, Field
 
@@ -193,7 +193,7 @@ with: "Document structure received and ready for validation."
 
     def _validate_spec_with_context(
         self, spec: ValidationSpec, message_history: List[Any]
-    ) -> tuple[ValidationResult, List[Any]]:
+    ) -> Tuple[ValidationResult, List[Any]]:
         """
         Validate a specification against the document using established context.
 
