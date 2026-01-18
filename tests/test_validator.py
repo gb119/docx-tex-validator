@@ -1,5 +1,5 @@
 """
-Basic tests for the docx-validator package.
+Basic tests for the docx-tex-validator package.
 """
 
 import pytest
