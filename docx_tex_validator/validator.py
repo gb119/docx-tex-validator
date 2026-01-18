@@ -276,8 +276,10 @@ with: "Document structure received and ready for validation."
         except Exception as e:
             # If context setup fails, log the error and return empty history
             # This will trigger fallback to the legacy validation method
+            # Note: We log the exception type but not the full message to avoid
+            # potentially exposing sensitive information in logs
             logger.warning(
-                f"Context setup failed: {str(e)}. "
+                f"Context setup failed with {type(e).__name__}. "
                 "Falling back to legacy validation method (includes document in each request)."
             )
             return []

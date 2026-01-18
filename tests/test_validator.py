@@ -13,6 +13,7 @@ from docx_tex_validator.parser import DocxParser
 
 # Constants
 GITHUB_MODELS_TEST_RESULTS_FILE = "github_models_test_results.json"
+MIN_REASONING_LENGTH = 10  # Minimum length for meaningful validation reasoning
 
 
 def test_validation_spec_creation():
@@ -492,6 +493,13 @@ def test_github_models_integration():
 
     This test validates three sample documents against specifications using
     GitHub's AI model service. It requires GITHUB_TOKEN to be set.
+
+    The test includes sanity checks to ensure validation is actually working:
+    - Verifies documents don't all have identical scores
+    - Ensures all results have substantive reasoning (not empty or too short)
+
+    These checks prevent silent validation failures where the test passes
+    but documents aren't actually being validated properly.
     """
     # Get the test data directory
     test_data_dir = Path(__file__).parent / "data"
@@ -601,7 +609,7 @@ def test_github_models_integration():
                 "Validation may not be working properly."
             )
             # Reasoning should be more than just a generic response
-            assert len(result.reasoning) > 10, (
+            assert len(result.reasoning) > MIN_REASONING_LENGTH, (
                 f"Result for '{result.spec_name}' in '{doc_name}' has very short reasoning: "
                 f"'{result.reasoning}'. Validation may not be working properly."
             )
