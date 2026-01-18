@@ -559,7 +559,7 @@ def test_github_models_integration():
         github_token = os.environ["GITHUB_TOKEN"]
         validator = DocxValidator(
             backend="github",
-            model_name="gpt-4o-mini",
+            model_name="gpt-4o",
             api_key=github_token,
         )
 
