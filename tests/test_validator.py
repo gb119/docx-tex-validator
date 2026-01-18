@@ -371,9 +371,14 @@ def test_validate_spec_with_context():
 
         # Mock message history
         message_history = [{"role": "user", "content": "Document structure..."}]
+        
+        # Mock document structure
+        doc_structure = {"metadata": {"title": "Test"}, "paragraphs": ["Content"]}
 
-        # Call the method (now returns tuple)
-        result, updated_history = validator._validate_spec_with_context(spec, message_history)
+        # Call the method (now returns tuple and requires doc_structure)
+        result, updated_history = validator._validate_spec_with_context(
+            spec, message_history, doc_structure
+        )
 
         # Verify the result
         assert result.spec_name == "Has Title"
