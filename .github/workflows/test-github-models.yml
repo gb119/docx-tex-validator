@@ -24,7 +24,7 @@ jobs:
 
       - name: Run GitHub models integration test
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.MODELS_TOKEN }}
         run: |
           pytest tests/test_validator.py::test_github_models_integration -v
 
