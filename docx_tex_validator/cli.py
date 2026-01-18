@@ -48,8 +48,8 @@ def cli():
 @click.option(
     "--model",
     "-m",
-    default="gpt-4o-mini",
-    help="Model name to use (default: gpt-4o-mini)",
+    default="gpt-4o",
+    help="Model name to use (default: gpt-4o - has 128k context window)",
 )
 @click.option(
     "--parser",
