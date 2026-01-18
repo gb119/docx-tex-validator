@@ -11,6 +11,9 @@ import pytest
 from docx_tex_validator import DocxValidator, ValidationResult, ValidationSpec
 from docx_tex_validator.parser import DocxParser
 
+# Constants
+GITHUB_MODELS_TEST_RESULTS_FILE = "github_models_test_results.json"
+
 
 def test_validation_spec_creation():
     """Test creating a ValidationSpec."""
@@ -527,11 +530,10 @@ def test_github_models_integration():
         assert 0.0 <= report.score <= 1.0
         assert len(report.results) == len(specs)
     
-    # Create JSON artifact with detailed results
-    # Structure: for each test spec, show results across all files
+    # Create JSON artifact with detailed results organized by file
     output_data = {}
     
-    # First, organize by file
+    # Organize results by file, with each file showing all test results
     for docx_file in docx_files:
         doc_name = docx_file.name
         report = reports[doc_name]
@@ -555,7 +557,7 @@ def test_github_models_integration():
         }
     
     # Write JSON artifact
-    output_file = Path(__file__).parent / "github_models_test_results.json"
+    output_file = Path(__file__).parent / GITHUB_MODELS_TEST_RESULTS_FILE
     with open(output_file, "w") as f:
         json.dump(output_data, f, indent=2)
     
