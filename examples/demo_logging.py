@@ -86,7 +86,12 @@ def main():
     print("   - 'Response metadata' showing HTTP response details")
     print()
     print("Example command:")
-    print("  python -c 'import logging; logging.basicConfig(level=logging.DEBUG); ...")
+    print("  OPENAI_API_KEY=your_key python your_script.py")
+    print()
+    print("Or in your Python code:")
+    print("  import logging")
+    print("  logging.basicConfig(level=logging.DEBUG)")
+    print("  # Then use validator as normal")
     print()
     print("=" * 80)
 
