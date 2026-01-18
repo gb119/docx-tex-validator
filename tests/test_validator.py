@@ -583,6 +583,29 @@ def test_github_models_integration():
         f"mostly incorrect score ({mostly_incorrect_score})"
     )
     
+    # Sanity check: Ensure validation is actually happening
+    # All three documents should not have identical results
+    all_scores = [fully_correct_score, partially_correct_score, mostly_incorrect_score]
+    assert not all(s == all_scores[0] for s in all_scores), (
+        "All documents have identical scores, validation may not be working properly. "
+        f"Scores: Fully correct={fully_correct_score}, "
+        f"Partially correct={partially_correct_score}, "
+        f"Mostly incorrect={mostly_incorrect_score}"
+    )
+    
+    # Additional sanity check: Ensure results contain actual reasoning
+    for doc_name, report in reports.items():
+        for result in report.results:
+            assert result.reasoning, (
+                f"Result for '{result.spec_name}' in '{doc_name}' has no reasoning. "
+                "Validation may not be working properly."
+            )
+            # Reasoning should be more than just a generic response
+            assert len(result.reasoning) > 10, (
+                f"Result for '{result.spec_name}' in '{doc_name}' has very short reasoning: "
+                f"'{result.reasoning}'. Validation may not be working properly."
+            )
+    
     # Print summary for debugging
     print("\n=== Validation Results ===")
     for doc_name, report in reports.items():
