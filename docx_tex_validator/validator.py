@@ -4,9 +4,11 @@ Core validation module using pydantic-ai with pluggable AI backends.
 
 import json
 import logging
+import traceback
 from typing import Any, Dict, List, Optional, Tuple
 
 from pydantic import BaseModel, Field
+from pydantic_ai.exceptions import ModelHTTPError
 
 from .backends import get_backend
 from .parser import DocxParser
@@ -291,14 +293,31 @@ with: "Document structure received and ready for validation."
             # Return the message history from this interaction
             return response.all_messages()
         except Exception as e:
-            # If context setup fails, log the error and return empty history
+            # If context setup fails, log comprehensive error information
             # This will trigger fallback to the legacy validation method
-            # Note: We log the exception type but not the full message to avoid
-            # potentially exposing sensitive information in logs
+            
+            # Log the exception type and basic message
+            logger.error(
+                f"Context setup failed with {type(e).__name__}: {str(e)}"
+            )
+            
+            # For ModelHTTPError, log additional HTTP-specific details
+            if isinstance(e, ModelHTTPError):
+                logger.error(
+                    f"HTTP Error Details - Status Code: {e.status_code}, "
+                    f"Model: {e.model_name if hasattr(e, 'model_name') else 'unknown'}"
+                )
+                if e.body is not None:
+                    logger.error(f"Response Body: {e.body}")
+            
+            # Log the full traceback for debugging
+            logger.debug("Full traceback:", exc_info=True)
+            
+            # Provide user-friendly guidance
             logger.warning(
-                f"Context setup failed with {type(e).__name__}. "
                 "Falling back to legacy validation method (includes document in each request)."
             )
+            
             return []
 
     def _validate_spec_with_context(
