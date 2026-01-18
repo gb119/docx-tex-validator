@@ -285,7 +285,7 @@ with: "Document structure received and ready for validation."
                 output_type = getattr(self.agent, '_output_type', None)
                 if output_type is not None:
                     logger.debug("Agent output_type: %s", output_type)
-            except Exception:
+            except (AttributeError, TypeError):
                 # Silently ignore if we can't access the output_type
                 pass
             logger.debug("Prompt length: %d characters", len(context_prompt))
@@ -319,9 +319,9 @@ with: "Document structure received and ready for validation."
             
             # For ModelHTTPError, log additional HTTP-specific details
             if isinstance(e, ModelHTTPError):
+                model_name = getattr(e, 'model_name', 'unknown')
                 logger.error(
-                    f"HTTP Error Details - Status Code: {e.status_code}, "
-                    f"Model: {getattr(e, 'model_name', 'unknown')}"
+                    f"HTTP Error Details - Status Code: {e.status_code}, Model: {model_name}"
                 )
                 body = getattr(e, 'body', None)
                 if body is not None:
