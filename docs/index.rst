@@ -1,5 +1,5 @@
-docx-validator Documentation
-============================
+docx-tex-validator Documentation
+=================================
 
 A Python library and command-line tool that uses LLMs (via GitHub Models and pydantic-ai) to validate Microsoft Word .docx files against specification requirements.
 
